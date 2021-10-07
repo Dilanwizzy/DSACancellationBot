@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:alpine
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    restart: always
+    env_file:
+      - .env
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  server:
+    build: ./
+    image: DSACancellation
+    ports:
+      - 8000:8000
+      - 5900:5900
+    depends_on:
+      - db
+    environment:
+      - NODE_ENV=docker
+    env_file:
+      - .env
+      
+  redis:
+    image: 'redis:5.0.7-alpine'
+    ports:
+      - '6379:6379'
+    networks:
+      - default
+
+networks:
+  default:
+    external:
+      name: sample

@@ -1,0 +1,112 @@
+import { Cluster } from 'puppeteer-cluster3';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import Ua from 'puppeteer-extra-plugin-anonymize-ua';
+import UserAgent from 'user-agents';
+import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker';
+import {
+  BrowserConnectOptions,
+  BrowserLaunchArgumentOptions,
+  LaunchOptions,
+  Page,
+} from 'puppeteer';
+import * as helper from './constants/index';
+import { ProxyDto } from '../modules/proxy/dto/proxy.dto';
+import * as sites from '../sites/index';
+import { Captcha } from './captcha';
+import { exec } from 'child_process';
+import { Log } from '../providers/utils/Log';
+import { ApiConfigService } from '../shared/services/api-config.service';
+import { ProxyService } from '../modules/proxy/proxy.service';
+import { BookedTimeService } from '../modules/booked-time/booked-time.service';
+
+export class ClusterP {
+  private readonly log = new Log('ClusterHelper').api();
+  private proxy: ProxyDto;
+
+  constructor(
+    private readonly configService: ApiConfigService,
+    private readonly proxyDto: ProxyDto,
+    private readonly bookedTimeService: BookedTimeService,
+    private readonly captcha: Captcha,
+  ) {
+    puppeteer.use(StealthPlugin());
+    puppeteer.use(Ua());
+    // puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
+  }
+
+  async build(): Promise<Cluster> {
+
+    const proxy = helper.createProxyString(this.proxyDto);
+
+    const userAgent = new UserAgent();
+
+    const puppeteerOptions: LaunchOptions &
+      BrowserLaunchArgumentOptions &
+      BrowserConnectOptions = {
+      headless: false,
+      defaultViewport: null,
+      slowMo: 15,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--disable-features=AudioServiceOutOfProcess',
+
+        // '--no-sandbox',
+        // '--disable-setuid-sandbox',
+        // '--disable-web-security',
+        // '--disable-features=IsolateOrigins,site-per-process',
+        // '--disable-setuid-sandbox',
+        // '--disable-dev-shm-usage',
+        // '--no-first-run',
+        `--user-agent=${userAgent}`,
+        // '--no-zygote',
+      ],
+    };
+
+    if (proxy) {
+      puppeteerOptions.args.push(`--proxy-server=${proxy}`);
+    }
+
+    const cluster = await Cluster.launch({
+      puppeteer,
+      concurrency: Cluster.CONCURRENCY_BROWSER,
+      maxConcurrency:
+        parseInt(this.configService.parallelTasks.toString()) || 1,
+      timeout: 20 * 60 * 1000,
+      monitor: true,
+      puppeteerOptions,
+    });
+
+    cluster.task(async ({ page, data: url }) => {
+      this.log.info('Cluster started');
+
+      if (this.proxyDto) {
+        this.log.info(`Proxy detail ${proxy}`);
+        await page.authenticate({
+          username: this.proxyDto.username,
+          password: this.proxyDto.password,
+        });
+      }
+
+      try {
+        const site = new sites['DSA'](
+          page,
+          url,
+          this.configService,
+          this.bookedTimeService,
+          this.captcha,
+        );
+        await site.start();
+      } catch (err) {
+        this.log.error(`Exiting - An error occured ${err}`);
+      }
+
+      //Send mail
+    });
+
+    return cluster;
+  }
+}
