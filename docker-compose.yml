@@ -19,21 +19,23 @@ services:
     ports:
       - 8080:8080
 
-  # server:
-  #   build: ./
-  #   image: digitalplug/dsacancellationbot
-  #   ports:
-  #     - 8000:8000
-  #     - 5900:5900
-  #     - 3000:3000
-  #   depends_on:
-  #     - db
-  #   environment:
-  #     - NODE_ENV=docker
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - default
+  server:
+    build: ./
+    image: digitalplug/dsacancellationbot
+    ports:
+      - 8000:8000
+      - 5900:5900
+      - 3000:3000
+    volumes:
+      - ~/docker/volumes/dsacancellation/logs:/app/logs
+    depends_on:
+      - db
+    environment:
+      - NODE_ENV=docker
+    env_file:
+      - .env
+    networks:
+      - default
 
 networks:
   default:
