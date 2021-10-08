@@ -18,6 +18,9 @@ export class BookedTimeEntity extends AbstractEntity<BookedTimeDto> {
   @Column({ default: true})
   autoBook: boolean;
 
+  @Column({nullable: false, default:'NEED_LOCATION'})
+  location: string;
+
   @Column({ default: true})
   bookedPreferredLocation: boolean;
 

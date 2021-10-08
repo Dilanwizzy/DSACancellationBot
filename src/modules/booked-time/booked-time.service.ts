@@ -18,7 +18,7 @@ export class BookedTimeService {
   ) {}
 
   @Transactional()
-  async getBookedDateByUser(userId: string, newDate: Date): Promise<boolean> {
+  async getBookedDateByUser(userId: string, newDate: Date, location: string): Promise<boolean> {
     const queryBuilder = this.bookedTimeRepository.createQueryBuilder('time');
     let pickedDate: Date;
 
@@ -39,6 +39,7 @@ export class BookedTimeService {
       if(bookedTimeDto.bookedDate != pickedDate) {
           bookedTimeDto.bookedDate = pickedDate;
           bookedTimeDto.bookedPreferredLocation = true;
+          bookedTimeDto.location = location;
           updated = true;
       }
 
@@ -50,6 +51,20 @@ export class BookedTimeService {
     }
 
     return false;
+  }
+
+  async getBookedDate(userId: string): Promise<BookedTimeDto> | undefined {
+    const queryBuilder = this.bookedTimeRepository.createQueryBuilder('time');
+
+    queryBuilder.where('time.user_id = :userId', {userId: userId});
+
+    const bookedTimeEntity = await queryBuilder.getOne();
+
+    if (bookedTimeEntity != undefined) {
+      const bookedTimeDto = bookedTimeEntity.toDto<typeof BookedTimeDto>();
+
+      return bookedTimeDto;
+    }
   }
 
   @Transactional()

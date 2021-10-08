@@ -36,6 +36,11 @@ export class DSA {
   private submittingTimeProcess: string;
   private dbTime: { time: Date; updated: boolean };
   private listOfTriedTimes: string[];
+  //When the
+  private listOfClickedCentres: {
+    timeWhenInitiated: Date;
+    centres: string[];
+  } = { timeWhenInitiated: null, centres: [] };
 
   constructor(
     private page: Page,
@@ -67,7 +72,7 @@ export class DSA {
   /**
    * The main start process
    */
-  public async start() {
+  public async start(): Promise<boolean> {
     this.log.info('-------------------- Started --------------------');
     //Wraps the whole application in a try and catch
 
@@ -82,6 +87,7 @@ export class DSA {
         this.submittingTimeProcess = BOOKING_STATUS.FIRST_TIME;
 
         await this.resetSelectedLocation();
+        await this.resetClickedLocations();
         //Step 1 search for test centre
         this.log.info('-- Entering -> searchForTestCentre() --');
         await this.searchForTestCentre();
@@ -259,7 +265,6 @@ export class DSA {
   }
 
   private async scrollThroughListOfCentres(): Promise<boolean> {
-
     //TODO do not re click
     await this.page.waitForSelector('.test-centre-details-link', {
       timeout: this.defaultTimeOut,
@@ -294,8 +299,16 @@ export class DSA {
         await centreDatesFound.getProperty('textContent')
       ).jsonValue();
 
+      let hasLocationAlreadyBeenClicked: boolean = false;
+      
+      if(this.listOfClickedCentres) {
+        for (let index = 0; this.listOfClickedCentres.centres.length; index) {
+          hasLocationAlreadyBeenClicked = this.listOfClickedCentres.centres[index] == elementId ? true : false;
+        }
+      }
+
       //Step 2 - B - Check if the centre meets our requirements
-      if (await this.verifyLocation(centreDatesFound, centreLocation)) {
+      if (await this.verifyLocation(centreDatesFound, centreLocation) && !hasLocationAlreadyBeenClicked) {
         this.log.info(
           `centre meets requirements and has available times. Location : ${centreLocation} - DateFound : ${centreDatesFound}`,
         );
@@ -334,6 +347,14 @@ export class DSA {
           return false;
           // await this.page.click(testCentreSubmit);
         } else {
+          if (this.listOfClickedCentres) {
+            this.listOfClickedCentres.centres.push(elementId);
+          } else {
+            this.listOfClickedCentres = {
+              timeWhenInitiated: new Date(),
+              centres: [elementId],
+            };
+          }
           this.log.info(`Location has times available`);
 
           this.testCentreSelected.location = JSON.stringify(
@@ -566,6 +587,7 @@ export class DSA {
           updated = await this.bookedTimeService.getBookedDateByUser(
             'dilan',
             new Date(this.testCentreSelected.availableTimeSlot.time),
+            this.testCentreSelected.location,
           );
           break;
         } catch (err) {
@@ -696,5 +718,22 @@ export class DSA {
     });
 
     this.log.info('Captcha', isCaptchaSuccessful);
+  }
+
+  /**
+   * When we are going though the centres, and there's a centre with our requirements but the
+   * time is doesn't meet our other requirements. We do not want the cluster to keep trying the same centre
+   * This is a way of saying, we have tried this location already so move on to the others
+   *
+   * We do not want to be blocking other centres
+   */
+  private async resetClickedLocations() {
+    if (this.listOfClickedCentres) {
+      const timeDiff = (new Date().getTime() - this.listOfClickedCentres.timeWhenInitiated.getTime()) / 60000
+
+      if(timeDiff > 1.5) {
+        this.listOfClickedCentres = undefined;
+      }
+    }
   }
 }

@@ -19,8 +19,10 @@ import { Log } from '../providers/utils/Log';
 import { ApiConfigService } from '../shared/services/api-config.service';
 import { ProxyService } from '../modules/proxy/proxy.service';
 import { BookedTimeService } from '../modules/booked-time/booked-time.service';
+import { MailService } from '../modules/mail/mail.service';
+import { BookedTimeDto } from '../modules/booked-time/dto/booked-time.dto';
 
-export class ClusterP {
+export class Clusters {
   private readonly log = new Log('ClusterHelper').api();
   private proxy: ProxyDto;
 
@@ -29,14 +31,13 @@ export class ClusterP {
     private readonly proxyDto: ProxyDto,
     private readonly bookedTimeService: BookedTimeService,
     private readonly captcha: Captcha,
+    private readonly mailService: MailService,
   ) {
     puppeteer.use(StealthPlugin());
     puppeteer.use(Ua());
-    // puppeteer.use(AdblockerPlugin({ blockTrackers: true }));
   }
 
   async build(): Promise<Cluster> {
-
     const proxy = helper.createProxyString(this.proxyDto);
 
     const userAgent = new UserAgent();
@@ -46,7 +47,7 @@ export class ClusterP {
       BrowserConnectOptions = {
       headless: false,
       defaultViewport: null,
-      slowMo: 15,
+      slowMo: 10,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -100,10 +101,20 @@ export class ClusterP {
           this.captcha,
         );
         await site.start();
+
+        if (site) {
+          const bookedTimeDto: BookedTimeDto =
+            await this.bookedTimeService.getBookedDate('dilan');
+
+          await this.mailService.sendUserConfirmation(
+            bookedTimeDto.location,
+            bookedTimeDto.bookedDate,
+            this.configService.smtpConfig.email,
+          );
+        }
       } catch (err) {
         this.log.error(`Exiting - An error occured ${err}`);
       }
-
       //Send mail
     });
 

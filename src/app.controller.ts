@@ -14,12 +14,4 @@ export class AppController {
   async getHello(): Promise<string> {
     return 'Hello world';
   }
-
-  // @Post('task')
-  // @UseGuards(AuthGuard)
-  // @ApiBearerAuth()
-  // @ApiOkResponse({
-  //   type: LoginPayloadDto,
-  //   description: 'User Info with access token',
-  // })
 }

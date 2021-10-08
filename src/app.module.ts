@@ -1,7 +1,6 @@
 import './boilerplate.polyfill';
 
 import {
-  CacheModule,
   MiddlewareConsumer,
   Module,
   NestModule,
@@ -20,6 +19,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { HelperModule } from './helpers/helpers.module';
 import { ProxyModule } from './modules/proxy/proxy.module';
 import { BookedTimeModule } from './modules/booked-time/booked-time.module';
+import { MailModule } from './modules/mail/mail.module';
 
 @Module({
   imports: [
@@ -28,6 +28,7 @@ import { BookedTimeModule } from './modules/booked-time/booked-time.module';
     HelperModule,
     ProxyModule,
     BookedTimeModule,
+    MailModule,
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({
@@ -37,12 +38,6 @@ import { BookedTimeModule } from './modules/booked-time/booked-time.module';
       imports: [SharedModule],
       useFactory: (configService: ApiConfigService) =>
         configService.typeOrmConfig,
-      inject: [ApiConfigService],
-    }),
-    CacheModule.registerAsync({
-      imports: [SharedModule],
-      useFactory: (configService: ApiConfigService) =>
-        configService.redisConfig,
       inject: [ApiConfigService],
     }),
   ],

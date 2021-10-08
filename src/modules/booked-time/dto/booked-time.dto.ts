@@ -17,6 +17,9 @@ export class BookedTimeDto extends AbstractDto {
   autoBook: boolean;
 
   @ApiPropertyOptional()
+  location: string;
+
+  @ApiPropertyOptional()
   bookedPreferredLocation: boolean;
   
 
@@ -27,5 +30,6 @@ export class BookedTimeDto extends AbstractDto {
     this.bookedDate = booked.bookedDate;
     this.bookedPreferredLocation = booked.bookedPreferredLocation;
     this.earliestDate = booked.earliestDate;
+    this.location = booked.location;
   }
 }

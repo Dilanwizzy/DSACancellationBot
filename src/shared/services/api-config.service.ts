@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { MailerOptions } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Log } from '../../providers/utils/Log';
 import { UserSubscriber } from '../../entity-subscriber/user-subscriber';
 import { SnakeNamingStrategy } from '../../snake-naming.strategy';
-import * as redisStore from 'cache-manager-redis-store'
+import path from 'path';
 
 @Injectable()
 export class ApiConfigService {
@@ -102,13 +104,29 @@ export class ApiConfigService {
     };
   }
 
-  get redisConfig(): any {
+  get mailConfig(): MailerOptions {
+    this.log.info(`${path.join(__dirname, 'templates')}`);
     return {
-      store: redisStore,
-      host: '127.0.0.1',
-      port: 6379,
-      ttl: 600,
-    }
+      transport: {
+        host: this.smtpConfig.host,
+        secure: this.smtpConfig.secure,
+        port: this.smtpConfig.port,
+        auth: {
+          user: this.smtpConfig.username,
+          pass: this.smtpConfig.password,
+        }
+      },
+      defaults: {
+        from: '"No Reply" <noreply@digitalplug.co.uk>',
+      },
+      template: {
+        dir: path.join(__dirname, 'templates'),
+        adapter: new HandlebarsAdapter(), // or new PugAdapter() or new EjsAdapter()
+        options: {
+          strict: true,
+        },
+      },
+    };
   }
 
   get documentationEnabled(): boolean {
@@ -125,6 +143,17 @@ export class ApiConfigService {
   get captchaConfig() {
     return {
       apiKey: this.getString('CAPTCHA_API_KEY'),
+    };
+  }
+
+  get smtpConfig() {
+    return {
+      host: this.getString('SMTP_HOST'),
+      port: this.getNumber('SMTP_PORT'),
+      username: this.getString('SMTP_USERNAME'),
+      password: this.getString('SMTP_PASSWORD'),
+      secure: this.getBoolean('SMTP_SECURE'),
+      email: this.getString('EMAIL')
     };
   }
 

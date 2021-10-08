@@ -36,3 +36,25 @@ RUN mkdir ~/.vnc
 RUN x11vnc -storepasswd 1234 ~/.vnc/passwd
 
 EXPOSE 5900
+
+WORKDIR /app
+
+COPY package.json .
+
+RUN yarn
+
+COPY . .   
+
+RUN yarn build:prod
+
+ARG NODE_ENV
+
+ENV NODE_ENV=$NODE_ENV
+
+RUN chmod +x ./container_start.sh
+
+EXPOSE 8000
+
+EXPOSE 3000
+
+CMD /bin/sh './container_start.sh'
