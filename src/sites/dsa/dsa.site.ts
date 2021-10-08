@@ -22,7 +22,6 @@ export class DSA {
     'October',
     'November',
     'December',
-    'January',
   ];
   private preferredLocation: string[] = [
     'Tottenham',
@@ -30,7 +29,7 @@ export class DSA {
     'Wood Green (London)',
     'Enfield (Innova Business Park)',
     'Barnet (London)',
-    'St Albans',
+    // 'St Albans',
   ];
   private testCentreSelected: ChosenTestCentre;
   private submittingTimeProcess: string;
@@ -87,7 +86,7 @@ export class DSA {
         this.submittingTimeProcess = BOOKING_STATUS.FIRST_TIME;
 
         await this.resetSelectedLocation();
-        await this.resetClickedLocations();
+        // await this.resetClickedLocations();
         //Step 1 search for test centre
         this.log.info('-- Entering -> searchForTestCentre() --');
         await this.searchForTestCentre();
@@ -301,14 +300,14 @@ export class DSA {
 
       let hasLocationAlreadyBeenClicked: boolean = false;
       
-      if(this.listOfClickedCentres) {
-        for (let index = 0; this.listOfClickedCentres.centres.length; index) {
-          hasLocationAlreadyBeenClicked = this.listOfClickedCentres.centres[index] == elementId ? true : false;
-        }
-      }
+      // if(this.listOfClickedCentres) {
+      //   for (let index = 0; this.listOfClickedCentres.centres.length; index) {
+      //     hasLocationAlreadyBeenClicked = this.listOfClickedCentres.centres[index] == elementId ? true : false;
+      //   }
+      // }
 
       //Step 2 - B - Check if the centre meets our requirements
-      if (await this.verifyLocation(centreDatesFound, centreLocation) && !hasLocationAlreadyBeenClicked) {
+      if (await this.verifyLocation(centreDatesFound, centreLocation)) {
         this.log.info(
           `centre meets requirements and has available times. Location : ${centreLocation} - DateFound : ${centreDatesFound}`,
         );
@@ -347,14 +346,14 @@ export class DSA {
           return false;
           // await this.page.click(testCentreSubmit);
         } else {
-          if (this.listOfClickedCentres) {
-            this.listOfClickedCentres.centres.push(elementId);
-          } else {
-            this.listOfClickedCentres = {
-              timeWhenInitiated: new Date(),
-              centres: [elementId],
-            };
-          }
+          // if (this.listOfClickedCentres) {
+          //   this.listOfClickedCentres.centres.push(elementId);
+          // } else {
+          //   this.listOfClickedCentres = {
+          //     timeWhenInitiated: new Date(),
+          //     centres: [elementId],
+          //   };
+          // }
           this.log.info(`Location has times available`);
 
           this.testCentreSelected.location = JSON.stringify(
@@ -628,7 +627,7 @@ export class DSA {
 
         this.log.info('Confirmed Booked');
         await this.page.click(confirmMySlotSelector);
-        // this.submittingTimeProcess = BOOKING_STATUS.TIME_BOOKED;
+        this.submittingTimeProcess = BOOKING_STATUS.TIME_BOOKED;
       } else {
         await this.verifyIfWeNeedToDoACaptcha();
         this.listOfTriedTimes.push(
@@ -669,8 +668,6 @@ export class DSA {
         case '11':
           isLocationValid = true;
         case '12':
-          isLocationValid = true;
-        case '01':
           isLocationValid = true;
       }
     }

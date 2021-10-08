@@ -27,9 +27,8 @@ export class AppService {
   ) {}
 
   // @Cron('0 */30 6-23 * * *')
-  @Cron('0 */1 6-24 * * *')
+  @Cron('0 */1 5-23 * * *')
   async getHello(): Promise<void> {
-    this.log.info('scheduler startes');
     if (this.spawnNewClusters) {
       this.spawnNewClusters = false;
 

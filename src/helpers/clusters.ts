@@ -76,7 +76,7 @@ export class Clusters {
       concurrency: Cluster.CONCURRENCY_BROWSER,
       maxConcurrency:
         parseInt(this.configService.parallelTasks.toString()) || 1,
-      timeout: 20 * 60 * 1000,
+      timeout: 25 * 60 * 1000,
       monitor: true,
       puppeteerOptions,
     });
@@ -102,16 +102,16 @@ export class Clusters {
         );
         await site.start();
 
-        if (site) {
-          const bookedTimeDto: BookedTimeDto =
-            await this.bookedTimeService.getBookedDate('dilan');
+        // if (site) {
+        //   const bookedTimeDto: BookedTimeDto =
+        //     await this.bookedTimeService.getBookedDate('dilan');
 
-          await this.mailService.sendUserConfirmation(
-            bookedTimeDto.location,
-            bookedTimeDto.bookedDate,
-            this.configService.smtpConfig.email,
-          );
-        }
+        //   await this.mailService.sendUserConfirmation(
+        //     bookedTimeDto.location,
+        //     bookedTimeDto.bookedDate,
+        //     this.configService.smtpConfig.email,
+        //   );
+        // }
       } catch (err) {
         this.log.error(`Exiting - An error occured ${err}`);
       }
