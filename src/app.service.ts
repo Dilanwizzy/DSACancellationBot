@@ -10,7 +10,6 @@ import { ProxyService } from './modules/proxy/proxy.service';
 import { Captcha } from './helpers/captcha';
 import { ProxyDto } from './modules/proxy/dto/proxy.dto';
 import { MailService } from './modules/mail/mail.service';
-import { Test } from './test';
 
 @Injectable()
 export class AppService {
