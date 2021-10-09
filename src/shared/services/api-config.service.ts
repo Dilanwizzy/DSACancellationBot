@@ -120,7 +120,7 @@ export class ApiConfigService {
         from: '"No Reply" <noreply@digitalplug.co.uk>',
       },
       template: {
-        dir: path.join(__dirname, 'templates'),
+        dir: path.resolve(process.cwd(), 'templates'),
         adapter: new HandlebarsAdapter(), // or new PugAdapter() or new EjsAdapter()
         options: {
           strict: true,

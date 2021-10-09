@@ -102,16 +102,16 @@ export class Clusters {
         );
         await site.start();
 
-        // if (site) {
-        //   const bookedTimeDto: BookedTimeDto =
-        //     await this.bookedTimeService.getBookedDate('dilan');
+        if (site) {
+          const bookedTimeDto: BookedTimeDto =
+            await this.bookedTimeService.getBookedDate('dilan');
 
-        //   await this.mailService.sendUserConfirmation(
-        //     bookedTimeDto.location,
-        //     bookedTimeDto.bookedDate,
-        //     this.configService.smtpConfig.email,
-        //   );
-        // }
+          await this.mailService.sendUserConfirmation(
+            bookedTimeDto.location,
+            bookedTimeDto.bookedDate,
+            this.configService.smtpConfig.email,
+          );
+        }
       } catch (err) {
         this.log.error(`Exiting - An error occured ${err}`);
       }

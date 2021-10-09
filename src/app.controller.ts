@@ -10,8 +10,15 @@ export class AppController {
 
   // @UseGuards(AuthGuard)
   // @ApiBearerAuth()
-  @Get('/')
+  // @Get('/')
+  // async getHello(): Promise<string> {
+  //   await this.appService.test();
+  //   return 'Hello world';
+  // }
+
+  @Post('/')
   async getHello(): Promise<string> {
+    await this.appService.sendEmailForClusterFailure();
     return 'Hello world';
   }
 }
