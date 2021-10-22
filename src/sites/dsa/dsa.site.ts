@@ -1,5 +1,5 @@
 import { Captcha } from '../../helpers/captcha';
-import { ElementHandle, Page } from 'puppeteer';
+import { ElementHandle, Frame, Page } from 'puppeteer';
 import { Log } from '../../providers/utils/Log';
 import { ApiConfigService } from '../../shared/services/api-config.service';
 import { BookedTimeService } from '../../modules/booked-time/booked-time.service';
@@ -47,7 +47,7 @@ export class DSA {
     private apiConfigService: ApiConfigService,
     private bookedTimeService: BookedTimeService,
     private captcha: Captcha,
-  ) {}
+  ) { }
 
   private async resetSelectedLocation() {
     this.testCentreSelected = {
@@ -56,7 +56,7 @@ export class DSA {
     };
     this.listOfTriedTimes = [];
   }
-  
+
   /**
    * The main start process
    */
@@ -69,6 +69,7 @@ export class DSA {
         this.log.info('-- Entering -> loginToSite() --');
 
       await this.page.waitForTimeout(5 * 1000);
+
       await this.loginToSite();
       // return false;
 
@@ -123,6 +124,33 @@ export class DSA {
       }
     } catch (err) {
       throw err;
+    }
+  }
+  private async isImpervaGivingErrorCode(): Promise<void> {
+    this.log.debug("Imperva");
+    const impervaIframeSelector = 'iframe[id="main-iframe"]';
+    let failedDueToImperva = false;
+
+    let context: Frame;
+    const frameHandle = await this.page.$(impervaIframeSelector);
+    if (frameHandle) {
+      context = await frameHandle.contentFrame();
+      
+      let impervaError = await context.$(".error-title");
+
+      try {
+        impervaError = await (await impervaError.getProperty('textContent')).jsonValue();
+
+        if (impervaError.toString().includes('Access denied')) {
+          failedDueToImperva = true;
+          throw new Error("Imperva, Access Denied");
+        }
+      } catch (err) {
+        if(failedDueToImperva) {
+          throw err;
+        }
+      }
+      // this.log.info(impervaError);
     }
   }
 
@@ -205,6 +233,8 @@ export class DSA {
     // await this.page.click(pressButton);
 
     this.log.info('Successfully logged in');
+
+    await this.isImpervaGivingErrorCode();
   }
 
   /**
@@ -291,7 +321,7 @@ export class DSA {
       ).jsonValue();
 
       let hasLocationAlreadyBeenClicked: boolean = false;
-      
+
       // if(this.listOfClickedCentres) {
       //   for (let index = 0; this.listOfClickedCentres.centres.length; index) {
       //     hasLocationAlreadyBeenClicked = this.listOfClickedCentres.centres[index] == elementId ? true : false;
@@ -486,7 +516,7 @@ export class DSA {
 
         //if the prev time is early in the morining and new time in the afternoon pick the new time
         if (newDateTime.getTime() <= prevDateTime.getTime() && newDateTime.getHours() >= 9) {
-        // if (prevDateTime.getHours() < 11 && newDateTime.getHours() >= 11) {
+          // if (prevDateTime.getHours() < 11 && newDateTime.getHours() >= 11) {
           this.log.info(`Chosen this time ${newDateTime}`);
           this.testCentreSelected.availableTimeSlot = {
             date: dateElement,
@@ -676,14 +706,25 @@ export class DSA {
 
     if (inQueue) {
       this.log.info('We are in Queue');
-      await this.page.waitForSelector(userNameSelector, {
-        timeout: 35 * 1000,
-      });
+      let weInQueue = true;
+
+      while (weInQueue) {
+        let queue = await this.page.$('.warning-box');
+        if(queue) {
+          this.log.debug("We are still in queue");
+          await this.sleep(1000);
+        } else {
+          weInQueue = false;
+        }
+      }
     }
   }
 
   private async verifyIfWeNeedToDoACaptcha() {
+    //Verify if this is imperva instead
     await this.page.waitForTimeout(1.3 * 1000);
+    await this.isImpervaGivingErrorCode();
+
     const reCaptcha = await this.page.evaluate(() => {
       return document.querySelector('#main-iframe');
     });
@@ -722,7 +763,7 @@ export class DSA {
     if (this.listOfClickedCentres) {
       const timeDiff = (new Date().getTime() - this.listOfClickedCentres.timeWhenInitiated.getTime()) / 60000
 
-      if(timeDiff > 1.5) {
+      if (timeDiff > 1.5) {
         this.listOfClickedCentres = undefined;
       }
     }
