@@ -1,73 +1,71 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+<h1>DVSA Cancellation Bot</h1>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<p>I created this bot to help me find available time slots so I can book my driving test. I have used Driving Test Now and I found it wasn't that great especially as majority of centres are booked and people are using the app themselves. Also, it is very limiting of only allowing 3 centres.</p>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+<h2>Getting started</h2>
 
-## Description
+<h3>Prerequisites</h3>
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- Nodejs (Tested on Node12)
+- docker
+- yarn or npm
+- Captcha services such as (2captcha). Please note I have only tested on 2Captcha
+- SMTP (Optional)
 
-## Installation
 
-```bash
-$ npm install
-```
+There's two ways of running the application. 
+1. Is by ``npm run start:dev ``, ``yarn start:dev``. Or you can first build ``npm run build:prod`` and then ``npm run start:prod`` (same with yarn)
+2. Running the application in Docker a container
 
-## Running the app
+The first option can work on a normal 64bit computer (Intel or AMD) and DOES NOT WORK ON arm processors such as a raspberry pi.
+Puppeteer version of chromium does not support arm processors. So, you will have to run it on Docker.
 
-```bash
-# development
-$ npm run start
 
-# watch mode
-$ npm run start:dev
+<h3> Configuartion </h3>
 
-# production mode
-$ npm run start:prod
-```
+1. The main root of the application there's a **configuaryion.json** file. In there add the names of the centres you want the application to book for - Please make sure the names are **exactly** how they are on the DVSA site.
+2. Add the times it should look for. The times are in 24Hours and its only the hours not the minutes. E.g I have added 11, 12, 13, 14, 15. So, the bot will book anytime within those hours. 11:32, 11:03, 12:04, etc ... If left empty it will book any time. 
+3. Add the months you want.
+4. Copy the .env-example and rename to .env
+5. Add your details I will explain each one below
 
-## Test
+``PORT`` The port the server runs on
+``JWT_SECRET_KEY`` If you want authentication then set a secret key for encrypting and decoding JWT tokens.
+``JWT_EXPIRATION_TIME=3600`` JWT token expirition. Can be left as is
+``POSTGRES_HOST`` The ip/url postgres is run on. Left on localhost (default)
+``POSTGRES_PORT`` Postgres port. Left on 5432 (default)
+``POSTGRES_USER`` postgres user
+``POSTGRES_PASSWORD`` postgres password
 
-```bash
-# unit tests
-$ npm run test
+``CAPTCHA_API_KEY`` Captcha key use to send off captchas (Your 2captcha key)
+``PARALLEL_TASKS`` How many instances of puppeteer it will run. **I would recommend to be set to 1 or 2. 3 is also viable**, anything more seems to cause frequent errors. If you are not using proxies then I will stick to a max of 2 as after a certain amount of requests DVSA stops you from searching for available times.
 
-# e2e tests
-$ npm run test:e2e
+``LICENSE_NUMBER`` Your licence number on your provisional.
+``REFERENCE_NUMBER`` The booking confirmation reference number.
 
-# test coverage
-$ npm run test:cov
-```
+``SMTP_USERNAME`` Your SMTP details for email sending
+``SMTP_PASSWORD``
+``SMTP_HOST``
+``SMTP_PORT``
+``SMTP_SECURE`` Use secure connection - defaults to false
 
-## Support
+``EMAIL`` The address it will send emails to
+``ENABLE_EMAIL`` Enables being able to send emails. Must setup SMTP
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+#### Quick Explaination - For better understanding
 
-## Stay in touch
+- The bot runs from 6:00 - 23:00 these are the times where the DVSA service is available and this done through **nestjs scheduler**. You can find the code under ``src/app.service.ts``. I have also added a fail safe. I unitintially introduced a bug and I found the bot was failing and each time it accessed the site it was presented with a captcha. As you can imagine within 1 hour it sent off about 200 captchas to 2captcha and my ip got banned from DVSA. The bug has been resolved. But the fail safe remains for potential issues.
+- Once the application fails 3 times in less than 3 minutes then something went wrong and the bot stops spawning clusters until server is restarted. Added this due to that uintential bug
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
 
-## License
+#### Bookings
 
-Nest is [MIT licensed](LICENSE).
+The bot will book centres and dates you specified. However, under ``/src/helpers/constants/helpers`` there is a function called ``pickTheBestDate()`` and this has the logic of the date it will pick. Please read the comments to under what is happening
+
+<h3> (1) Starting and running the application </h3>
+--
+
+If you want to run it normally follow these steps
+
+
+

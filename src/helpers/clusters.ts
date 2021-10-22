@@ -47,27 +47,32 @@ export class Clusters {
       BrowserConnectOptions = {
       headless: false,
       defaultViewport: null,
-      slowMo: 10,
+      product: this.configService.useFirefox ? 'firefox' : 'chrome',
+      env: {
+        ...process.env,
+      },
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-web-security',
         '--disable-features=IsolateOrigins,site-per-process',
-        '--disable-features=AudioServiceOutOfProcess',
-
-        // '--no-sandbox',
-        // '--disable-setuid-sandbox',
-        // '--disable-web-security',
-        // '--disable-features=IsolateOrigins,site-per-process',
-        // '--disable-setuid-sandbox',
-        // '--disable-dev-shm-usage',
-        // '--no-first-run',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--no-first-run',
         `--user-agent=${userAgent}`,
         // '--no-zygote',
       ],
     };
 
-    if (proxy) {
+    if(this.configService.useFirefox && this.configService.enableProxy) {
+      puppeteerOptions.extraPrefsFirefox = {
+        "network.proxy.type": 1,
+        "network.proxy.http": `${this.proxyDto.ipAddress}:${this.proxyDto.password}@${this.proxyDto.username}`,
+        "network.proxy.http_port": this.proxyDto.port
+      }
+    }
+
+    if (proxy && !this.configService.useFirefox) {
       puppeteerOptions.args.push(`--proxy-server=${proxy}`);
     }
 
@@ -76,7 +81,7 @@ export class Clusters {
       concurrency: Cluster.CONCURRENCY_BROWSER,
       maxConcurrency:
         parseInt(this.configService.parallelTasks.toString()) || 1,
-      timeout: 25 * 60 * 1000,
+      timeout: 28 * 60 * 1000,
       monitor: true,
       puppeteerOptions,
     });
@@ -84,7 +89,7 @@ export class Clusters {
     cluster.task(async ({ page, data: url }) => {
       this.log.info('Cluster started');
 
-      if (this.proxyDto) {
+      if (this.proxyDto && !this.configService.useFirefox) {
         this.log.info(`Proxy detail ${proxy}`);
         await page.authenticate({
           username: this.proxyDto.username,
@@ -102,7 +107,7 @@ export class Clusters {
         );
         await site.start();
 
-        if (site) {
+        if (site && this.configService.isEmailEnabled) {
           const bookedTimeDto: BookedTimeDto =
             await this.bookedTimeService.getBookedDate('dilan');
 
@@ -115,7 +120,6 @@ export class Clusters {
       } catch (err) {
         this.log.error(`Exiting - An error occured ${err}`);
       }
-      //Send mail
     });
 
     return cluster;

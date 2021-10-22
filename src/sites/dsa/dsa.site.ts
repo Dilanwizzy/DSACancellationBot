@@ -56,18 +56,7 @@ export class DSA {
     };
     this.listOfTriedTimes = [];
   }
-
-  public async test() {
-    this.log.info('-------------------- Started --------------------');
-    //Wraps the whole application in a try and catch
-    await this.page.goto('http://localhost:3000/', {
-      waitUntil: ['domcontentloaded'],
-    }),
-      this.log.info('-- Entering -> loginToSite() --');
-    await this.page.waitForTimeout(5 * 1000);
-    throw new Error('hello');
-  }
-
+  
   /**
    * The main start process
    */
@@ -81,6 +70,7 @@ export class DSA {
 
       await this.page.waitForTimeout(5 * 1000);
       await this.loginToSite();
+      // return false;
 
       while (true) {
         this.submittingTimeProcess = BOOKING_STATUS.FIRST_TIME;
@@ -191,6 +181,8 @@ export class DSA {
     const userNameSelector = 'input[name="username"]';
     const passwordSelector = 'input[name="password"]';
     const pressButton = 'input[name="booking-login"]';
+
+    await this.verifyIfWeNeedToDoACaptcha();
 
     //Check if theres a queue to get onto the site
     await this.checkIfWeInQueue(userNameSelector);
@@ -493,7 +485,8 @@ export class DSA {
         const newDateTime = new Date(dateInMs);
 
         //if the prev time is early in the morining and new time in the afternoon pick the new time
-        if (prevDateTime.getHours() < 11 && newDateTime.getHours() >= 11) {
+        if (newDateTime.getTime() <= prevDateTime.getTime() && newDateTime.getHours() >= 9) {
+        // if (prevDateTime.getHours() < 11 && newDateTime.getHours() >= 11) {
           this.log.info(`Chosen this time ${newDateTime}`);
           this.testCentreSelected.availableTimeSlot = {
             date: dateElement,
@@ -676,12 +669,13 @@ export class DSA {
   }
 
   private async checkIfWeInQueue(userNameSelector) {
-    this.log.info('We are in Queue');
+    this.page.waitForTimeout(1.5 * 1000);
     const inQueue = await this.page.evaluate(() => {
       return document.querySelector('.warning-box');
     });
 
     if (inQueue) {
+      this.log.info('We are in Queue');
       await this.page.waitForSelector(userNameSelector, {
         timeout: 35 * 1000,
       });

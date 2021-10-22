@@ -1,0 +1,18 @@
+{
+    "centres": [
+        "centre1",
+        "centre2",
+        "centre3",
+        "etc"
+    ],
+    "months": [
+        "October",
+        "November",
+        "December",
+        "January"
+    ],
+
+    "preferences": {
+        "prefferedBookingTime": [11, 12, 13, 14, 15, 16]
+    },
+}

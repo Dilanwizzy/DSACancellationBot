@@ -12,7 +12,7 @@ import path from 'path';
 export class ApiConfigService {
   private readonly log = new Log('ApiConfigService').api();
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) { }
 
   get isDevelopment(): boolean {
     return this.nodeEnv === 'development';
@@ -105,7 +105,6 @@ export class ApiConfigService {
   }
 
   get mailConfig(): MailerOptions {
-    this.log.info(`${path.join(__dirname, 'templates')}`);
     return {
       transport: {
         host: this.smtpConfig.host,
@@ -114,7 +113,7 @@ export class ApiConfigService {
         auth: {
           user: this.smtpConfig.username,
           pass: this.smtpConfig.password,
-        }
+        },
       },
       defaults: {
         from: '"No Reply" <noreply@digitalplug.co.uk>',
@@ -153,8 +152,12 @@ export class ApiConfigService {
       username: this.getString('SMTP_USERNAME'),
       password: this.getString('SMTP_PASSWORD'),
       secure: this.getBoolean('SMTP_SECURE'),
-      email: this.getString('EMAIL')
+      email: this.getString('EMAIL'),
     };
+  }
+
+  get isEmailEnabled() {
+    return this.getString('ENABLE_EMAIL');
   }
 
   get getLicense() {
@@ -172,5 +175,13 @@ export class ApiConfigService {
     return {
       port: this.getString('PORT'),
     };
+  }
+
+  get useFirefox() {
+    return this.getBoolean("PUPPETEER_USE_FIREFOX");
+  }
+
+  get enableProxy() {
+    return this.getBoolean("ENABLE_PROXY");
   }
 }

@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "../../../../SneakerBot"
+		},
+		{
+			"path": "../../../../DSACancellationChecker"
+		},
+		{
+			"path": "../../../../project-p-ssr"
+		},
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../dsacancellation-checker-ts"
+		},
+		{
+			"path": "../../../../awesome-nest-boilerplate"
+		}
+	],
+	"settings": {}
+}

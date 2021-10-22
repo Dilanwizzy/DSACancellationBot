@@ -13,11 +13,11 @@ services:
     networks:
       - default
 
-  adminer:
-    image: adminer
-    restart: always
-    ports:
-      - 8080:8080
+  # adminer:
+  #   image: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
 
   server:
     build: ./
@@ -25,11 +25,9 @@ services:
     ports:
       - 8000:8000
       - 5900:5900
-      - 3000:3000
+      - 4000:3000
     volumes:
       - ~/docker/volumes/dsacancellation/logs:/app/logs
-    depends_on:
-      - db
     environment:
       - NODE_ENV=docker
     env_file:

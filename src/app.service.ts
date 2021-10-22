@@ -36,17 +36,22 @@ export class AppService {
     private readonly captcha: Captcha,
     private readonly mailService: MailService,
     private eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   // @Cron('0 */30 6-23 * * *')
-  @Cron('0 */1 5-23 * * *')
+  @Cron('*/10 * 5-22 * * *')
   async getHello(): Promise<void> {
     if (this.spawnNewClusters && !this.clusterCheck.isClusterFailing) {
       this.spawnNewClusters = false;
       this.clusterCheck.clusterStartedTime = new Date();
+      let proxyDto: ProxyDto = null;
 
-      const proxyDto: ProxyDto =
-        await this.proxyService.getOldestAvailableProxy();
+      if (this.apiConfigService.enableProxy) {
+        proxyDto = await this.proxyService.getOldestAvailableProxy();
+      }
+
+
+      // this.log.info(`Dilan chosen proxy ${proxyDto.id}`);
 
       const cluster = await new Clusters(
         this.apiConfigService,
@@ -58,7 +63,7 @@ export class AppService {
       let count = 0;
       while (count < this.apiConfigService.parallelTasks) {
         cluster.queue(
-          'https://driverpracticaltest.dvsa.gov.uk/manage?execution=e1s1',
+          'https://driverpracticaltest.dvsa.gov.uk/login',
         );
         count++;
       }
@@ -69,8 +74,7 @@ export class AppService {
 
       this.spawnNewClusters = true;
       this.eventEmitter.emit('cluster_closed');
-      // exec('pkill chrome');
-      this.proxyService.proxyNoLongerBeingUsed(proxyDto.id);
+      this.apiConfigService.enableProxy ? this.proxyService.proxyNoLongerBeingUsed(proxyDto.id) : undefined;
     }
   }
 
@@ -82,7 +86,7 @@ export class AppService {
       (clusterCloseDate.getTime() -
         this.clusterCheck.clusterStartedTime.getTime()) /
       60000;
-    if (timeDiff <= 3) {
+    if (timeDiff <= 5) {
       this.clusterCheck.clusterFailCount++;
     } else {
       this.clusterCheck.clusterFailCount--;
@@ -97,10 +101,15 @@ export class AppService {
   }
 
   public async sendEmailForClusterFailure(): Promise<void> {
-    await this.mailService.sendClusterFailed(
-      this.clusterCheck.clusterStartedTime,
-      this.apiConfigService.smtpConfig.email,
-    );
+    if (this.apiConfigService.isEmailEnabled) {
+      await this.mailService.sendClusterFailed(
+        this.clusterCheck.clusterStartedTime,
+        this.apiConfigService.smtpConfig.email,
+      );
+    }
+
+    this.log.info('Stopped Spawning new Clusters - As they are failing.');
+    this.log.info('Please read the README to section Cluster Spawning');
   }
 
   private async sleep(ms: number) {

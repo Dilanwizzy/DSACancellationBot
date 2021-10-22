@@ -3,7 +3,11 @@ import { BookedTimeDto } from "../../modules/booked-time/dto/booked-time.dto";
 import { ProxyDto } from "../../modules/proxy/dto/proxy.dto";
 
 export function createProxyString(proxy: ProxyDto): String {
+    if(proxy) {
         return `${proxy.ipAddress}:${proxy.port}`;
+    }
+
+    return null;
 }
 
 export function pickTheBestDate(bookedTimeDto: BookedTimeDto, newDate: Date): Date {
@@ -19,10 +23,11 @@ export function pickTheBestDate(bookedTimeDto: BookedTimeDto, newDate: Date): Da
         //timeDiff > 0 - means new time is behind of the prev time
         //timeDiff < 0 - means new time is ahead the prev time
 
-        if(timeDiff > 21000 && prevTime.getHours() < 11 && newDate.getHours() >= 11) {
-            //If new time is ahead by a maximum of 2 weeks and the time is after 11am or after than pick this time
-            return newDate;
-        } else if (timeDiff < -21000 && newDate.getHours() >= 10) {
+        // if(timeDiff > 21000 && prevTime.getHours() < 11 && newDate.getHours() >= 11) {
+        //     //If new time is ahead by a maximum of 2 weeks and the time is after 11am or after than pick this time
+        //     return newDate;
+        // } 
+        if (timeDiff < -21000 && newDate.getHours() >= 9) {
             //If new time is behind by 2 weeks or more than pick this time
             return newDate;
         } else {
